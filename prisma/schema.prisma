@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// enum SubscriptionCategory {
+//   FREE       // Basic access with limited features
+//   PREMIUM    // Extended access with advanced analytics and more features
+// }
+
+enum PaymentMethod {
+  CARD // Payment by credit or debit card
+  CASH // Cash transactions
+  NETBANKING // Online banking transfers
+}
+
+enum TransactionCategory {
+  GROCERIES
+  ENTERTAINMENT
+  TRANSPORT
+  UTILITIES
+  OTHERS
+}
+
+model User {
+  id                  String         @id
+  email               String         @unique
+  isSubscribed        Boolean        @default(false)
+  subscriptionEnds    DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  Transactions        Transactions[]
+  SubscriptionsBought Subscription[]
+  budget              Int            @default(0)
+
+  mandates mandates[]
+}
+
+model Subscription {
+  id        String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  subscriptionAmount Int
+
+}
+
+model Transactions {
+  id              String              @id @default(cuid())
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  paymentMethod   PaymentMethod
+  paymentFor      String
+  amount          Int
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  category        TransactionCategory
+  @@index([userId, createdAt]) 
+}
+
+model mandates {
+  id             String              @id @default(cuid())
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  paymentMethod   PaymentMethod
+  paymentFor      String
+  amount          Int
+  repeat          Int
+  startDate       DateTime
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
